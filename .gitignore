@@ -1,0 +1,10 @@
+/target/
+/.settings/
+/.project
+/.classpath
+/test-output/
+/reports/*.html
+/reports/*.png
+.DS_Store
+bin/target/
+settings/
