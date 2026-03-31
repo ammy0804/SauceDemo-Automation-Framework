@@ -2,45 +2,36 @@ pipeline {
     agent any
 
     tools {
-        // Change these to match the names Jenkins suggested in your error log!
+        // These must match your Jenkins Global Tool Configuration names
         maven 'myMaven' 
         jdk 'myjava'    
     }
 
-  //  stages {
-    //    stage('Checkout') {
-      //      steps {
-        //        git 'https://github.com/ammy0804/SauceDemo-Automation-Framework.git'
-          //  }
-       // }
-
+    stages {
         stage('Docker Grid Up') {
             steps {
-                // Starts your Selenium Grid in the background
-                sh 'docker-compose up -d'
+                // Starts your Selenium Grid nodes
+                bat 'docker-compose up -d'
             }
         }
 
         stage('Run Automation Tests') {
             steps {
-                // Runs the specific Docker XML suite
-                sh 'mvn test -DsuiteXmlFile=grid-docker.xml'
-            }
-            post {
-                always {
-                    // Stop the grid even if tests fail
-                    sh 'docker-compose down'
-                }
+                // Runs the tests through Maven
+                bat 'mvn test -DsuiteXmlFile=grid-docker.xml'
             }
         }
     }
 
     post {
         always {
-            // Tells Jenkins to save your Extent Report so you can view it later
+            // Shuts down the grid even if tests fail
+            bat 'docker-compose down'
+            
+            // Saves your Extent Report in Jenkins
             archiveArtifacts artifacts: 'reports/*.html', fingerprint: true
             
-            // Optional: If you use the TestNG Plugin, this shows the charts in Jenkins
+            // Displays TestNG charts (Requires TestNG Results Plugin)
             testng() 
         }
     }
