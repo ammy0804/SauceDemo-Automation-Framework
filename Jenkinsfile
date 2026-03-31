@@ -7,12 +7,12 @@ pipeline {
         jdk 'myjava'    
     }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/ammy0804/SauceDemo-Automation-Framework.git'
-            }
-        }
+  //  stages {
+    //    stage('Checkout') {
+      //      steps {
+        //        git 'https://github.com/ammy0804/SauceDemo-Automation-Framework.git'
+          //  }
+       // }
 
         stage('Docker Grid Up') {
             steps {
