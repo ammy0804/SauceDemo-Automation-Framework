@@ -4,7 +4,7 @@ import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
 import com.aventstack.extentreports.reporter.configuration.Theme;
-
+import com.epam.healenium.SelfHealingDriver; // <-- ADDED HEALENIUM IMPORT
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -19,7 +19,7 @@ import org.testng.annotations.*;
 import utils.ConfigReader;
 
 import java.io.File;
-import java.lang.reflect.Method; // <-- ADDED THIS IMPORT
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.time.Duration;
 import java.util.HashMap;
@@ -27,7 +27,6 @@ import java.util.Map;
 
 public class BaseTest {
     protected WebDriver driver;
-    // Removed unused WebDriverWait
     
     protected static ExtentReports extent;
     public static ThreadLocal<ExtentTest> test = new ThreadLocal<>();
@@ -52,39 +51,37 @@ public class BaseTest {
     @SuppressWarnings("deprecation")
     @Parameters({"browser", "environment"})
     @BeforeMethod
-    // --- OPTIMIZATION 1: ADDED 'Method method' ---
     public void setUp(Method method, @Optional("config") String browser, @Optional("local") String env) throws Exception {
         
-        // Check config file FIRST
-    	if (browser.equalsIgnoreCase("config")) {
+        if (browser.equalsIgnoreCase("config")) {
             browser = ConfigReader.getProperty("browser");
         }
 
-        // --- OPTIMIZATION 2: SAVE BROWSER AFTER CONFIG CHECK ---
         threadBrowser.set(browser.toUpperCase());
-        
-        // --- OPTIMIZATION 1 (Cont): AUTO-CREATE EXTENT TEST ---
         test.set(extent.createTest(method.getName()));
         test.get().assignCategory(threadBrowser.get());
-        // -------------------------------------------------------
+
+        // --- HEALENIUM STEP 1: Define a delegate driver ---
+        WebDriver delegate = null;
+        URL gridUrl = new URL("http://localhost:4444/wd/hub");
 
         if (env.equalsIgnoreCase("grid")) {
             switch (browser.toLowerCase()) {
                 case "edge":
                     EdgeOptions edgeOptions = new EdgeOptions();
                     edgeOptions.addArguments("--headless=new");
-                    driver = new RemoteWebDriver(new URL("http://localhost:4444/wd/hub"), edgeOptions);
+                    delegate = new RemoteWebDriver(gridUrl, edgeOptions);
                     break;
                 case "firefox":
                     FirefoxOptions fireOptions = new FirefoxOptions();
                     fireOptions.addArguments("-headless");
-                    driver = new RemoteWebDriver(new URL("http://localhost:4444/wd/hub"), fireOptions);
+                    delegate = new RemoteWebDriver(gridUrl, fireOptions);
                     break;
                 case "chrome":
                 default:
                     ChromeOptions chromeOptions = new ChromeOptions();
                     chromeOptions.addArguments("--headless=new");
-                    driver = new RemoteWebDriver(new URL("http://localhost:4444/wd/hub"), chromeOptions);
+                    delegate = new RemoteWebDriver(gridUrl, chromeOptions);
                     break;
             }
         } else {
@@ -92,34 +89,34 @@ public class BaseTest {
                 case "firefox":
                     FirefoxOptions firefoxOptions = new FirefoxOptions();
                     firefoxOptions.addArguments("-headless"); 
-                    driver = new FirefoxDriver(firefoxOptions);
+                    delegate = new FirefoxDriver(firefoxOptions);
                     break;
                 case "edge":
                     EdgeOptions edgeOptions = new EdgeOptions();
                     edgeOptions.addArguments("--headless=new"); 
-                    driver = new EdgeDriver(edgeOptions);
+                    delegate = new EdgeDriver(edgeOptions);
                     break;
                 case "safari":
-                    SafariOptions safariOptions = new SafariOptions();
-                    driver = new SafariDriver(safariOptions);
+                    delegate = new SafariDriver(new SafariOptions());
                     break;
                 case "chrome":
                 default:
                     ChromeOptions chromeOptions = new ChromeOptions();
-                    chromeOptions.addArguments("--headless=new");
-                    chromeOptions.addArguments("--window-size=1920,1080");
-                    chromeOptions.addArguments("--disable-popup-blocking");
-                    chromeOptions.addArguments("--incognito");
+                    chromeOptions.addArguments("--headless=new", "--window-size=1920,1080", "--incognito");
                     
                     Map<String, Object> prefs = new HashMap<>();
                     prefs.put("credentials_enable_service", false);
                     prefs.put("profile.password_manager_enabled", false);
                     chromeOptions.setExperimentalOption("prefs", prefs);
                     
-                    driver = new ChromeDriver(chromeOptions);
+                    delegate = new ChromeDriver(chromeOptions);
                     break;
             }
         }
+        
+        // --- HEALENIUM STEP 2: Wrap the delegate driver ---
+        // This activates the AI self-healing proxy
+        this.driver = SelfHealingDriver.create(delegate);
         
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
         
@@ -150,9 +147,13 @@ public class BaseTest {
         
         File reportFile = new File("reports/SauceDemoReport.html");
         if(reportFile.exists()) {
-            java.awt.Desktop.getDesktop().browse(reportFile.toURI());
+            // Check if Desktop is supported to avoid Jenkins crashes
+            if (java.awt.Desktop.isDesktopSupported()) {
+                java.awt.Desktop.getDesktop().browse(reportFile.toURI());
+            }
         }
     }
+
     public WebDriver getDriver() {
         return driver;
     }
