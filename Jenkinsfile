@@ -9,31 +9,27 @@ pipeline {
     stages {
         stage('Cleanup & Docker Grid Up') {
             steps {
-                // First, we force-stop any old containers to avoid the "Conflict" error
                 bat 'docker-compose down'
-                
-                // Now we start a fresh grid
                 bat 'docker-compose up -d'
             }
         }
 
         stage('Run Automation Tests') {
             steps {
-                // Runs the tests
-                bat 'mvn test -DsuiteXmlFile=grid-docker.xml'
+                // The flag below tells Jenkins: "Don't crash if a test fails; let the report handle it."
+                bat 'mvn test -DsuiteXmlFile=grid-docker.xml -Dmaven.test.failure.ignore=true'
             }
         }
     }
 
     post {
         always {
-            // Clean up containers after the run
             bat 'docker-compose down'
             
-            // Save the HTML Extent Report
+            // This captures your beautiful HTML Extent Report
             archiveArtifacts artifacts: 'reports/*.html', fingerprint: true
             
-            // FIX: Capital 'NG' to match what your Jenkins log requires
+            // This generates the trend charts in Jenkins
             testNG() 
         }
     }
