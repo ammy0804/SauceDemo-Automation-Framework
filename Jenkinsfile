@@ -2,15 +2,15 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven 3.9.x' // Must match the name in Jenkins Global Tool Configuration
-        jdk 'JDK 17'        // Must match the name in Jenkins Global Tool Configuration
+        // Change these to match the names Jenkins suggested in your error log!
+        maven 'myMaven' 
+        jdk 'myjava'    
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Pulls the latest code from your GitHub
-                git 'https://github.com/YourUsername/YourRepository.git'
+                git 'https://github.com/ammy0804/SauceDemo-Automation-Framework.git'
             }
         }
 
