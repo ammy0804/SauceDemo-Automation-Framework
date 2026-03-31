@@ -2,22 +2,24 @@ pipeline {
     agent any
 
     tools {
-        // These must match your Jenkins Global Tool Configuration names
         maven 'myMaven' 
         jdk 'myjava'    
     }
 
     stages {
-        stage('Docker Grid Up') {
+        stage('Cleanup & Docker Grid Up') {
             steps {
-                // Starts your Selenium Grid nodes
+                // First, we force-stop any old containers to avoid the "Conflict" error
+                bat 'docker-compose down'
+                
+                // Now we start a fresh grid
                 bat 'docker-compose up -d'
             }
         }
 
         stage('Run Automation Tests') {
             steps {
-                // Runs the tests through Maven
+                // Runs the tests
                 bat 'mvn test -DsuiteXmlFile=grid-docker.xml'
             }
         }
@@ -25,14 +27,14 @@ pipeline {
 
     post {
         always {
-            // Shuts down the grid even if tests fail
+            // Clean up containers after the run
             bat 'docker-compose down'
             
-            // Saves your Extent Report in Jenkins
+            // Save the HTML Extent Report
             archiveArtifacts artifacts: 'reports/*.html', fingerprint: true
             
-            // Displays TestNG charts (Requires TestNG Results Plugin)
-            testng() 
+            // FIX: Capital 'NG' to match what your Jenkins log requires
+            testNG() 
         }
     }
 }
