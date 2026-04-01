@@ -1,9 +1,6 @@
 pipeline {
     agent any
 
-    /* IMPORTANT: Ensure these names match 'Manage Jenkins' -> 'Global Tool Configuration' 
-       If your Maven is named 'Maven' and JDK is 'JDK11', change the names below.
-    */
     tools {
         maven 'myMaven' 
         jdk 'myjava'
@@ -12,24 +9,21 @@ pipeline {
     stages {
         stage('Checkout SCM') {
             steps {
-                // Pulls code from your GitHub repository
                 checkout scm
             }
         }
 
         stage('Docker Grid Cleanup & Up') {
             steps {
-                // -v wipes old data, --remove-orphans kills ghost containers
                 bat 'docker-compose down -v --remove-orphans'
                 bat 'docker-compose up -d'
-                // Give the Grid 15 seconds to fully initialize
                 sleep 15
             }
         }
 
         stage('Run Automation Tests') {
             steps {
-                // Runs the tests. ignore=true ensures reports generate even if a test fails.
+                // ignore=true ensures the pipeline continues to reporting even if tests fail
                 bat 'mvn test -DsuiteXmlFile=grid-docker.xml -Dmaven.test.failure.ignore=true'
             }
         }
@@ -37,14 +31,13 @@ pipeline {
 
     post {
         always {
-            // 1. FREE MEMORY: Stop the containers after execution
             bat 'docker-compose down'
-
-            // 2. PUBLISH RESULTS: Using the exact syntax from your generator screenshot
+            
+            // Exact syntax for your Jenkins version
             testNG()
 
-            // 3. SAVE HTML REPORT: Archive the Extent Report so you can view it in Jenkins
-            archiveArtifacts artifacts: 'reports/*.html', allowEmptyArchive: true
+            // Saves the Extent Report file so it appears on the build page
+            archiveArtifacts artifacts: 'reports/SauceDemoReport.html', fingerprint: true, allowEmptyArchive: true
         }
     }
 }

@@ -19,6 +19,9 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BaseTest {
     protected WebDriver driver;
@@ -28,30 +31,25 @@ public class BaseTest {
 
     @BeforeSuite
     public void setupReport() {
-        // 1. Create absolute path for the reports folder
+        // Create directory using absolute path
         String reportFolderPath = System.getProperty("user.dir") + File.separator + "reports";
         File reportDir = new File(reportFolderPath);
-        
-        // 2. Automatically create the directory if it doesn't exist
         if (!reportDir.exists()) {
             reportDir.mkdirs();
         }
 
-        // 3. Define report file path
         String reportFilePath = reportFolderPath + File.separator + "SauceDemoReport.html";
         ExtentSparkReporter spark = new ExtentSparkReporter(reportFilePath);
         
         spark.config().setTheme(Theme.DARK);
-        spark.config().setDocumentTitle("SauceDemo Grid Execution");
-        spark.config().setReportName("Standard Automation Results");
+        spark.config().setDocumentTitle("SauceDemo Results");
+        spark.config().setReportName("Standard Automation Suite");
         
         extent = new ExtentReports();
         extent.attachReporter(spark);
         
-        // Custom Environment Info
         extent.setSystemInfo("QA Engineer", "Amit Dehury");
-        extent.setSystemInfo("Execution Mode", "Selenium Grid 4");
-        extent.setSystemInfo("OS", System.getProperty("os.name"));
+        extent.setSystemInfo("Environment", "CI/CD Grid");
     }
 
     @Parameters({"browser", "environment"})
@@ -61,34 +59,38 @@ public class BaseTest {
         test.set(extent.createTest(method.getName()));
         test.get().assignCategory(threadBrowser.get());
 
+        // --- POPUP FIX: Disables Google password leak warnings ---
+        ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.addArguments("--disable-features=PasswordGeneration,PasswordLeakDetection");
+        chromeOptions.addArguments("--disable-save-password-bubble");
+        chromeOptions.addArguments("--headless=new"); // Best for Jenkins
+        
+        Map<String, Object> prefs = new HashMap<>();
+        prefs.put("credentials_enable_service", false);
+        prefs.put("profile.password_manager_enabled", false);
+        chromeOptions.setExperimentalOption("prefs", prefs);
+        chromeOptions.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
+
         if (env.equalsIgnoreCase("grid")) {
-            // URL of your Docker Selenium Hub
-            @SuppressWarnings("deprecation")
-			URL gridUrl = new URL("http://localhost:4444/wd/hub");
-            
+            URL gridUrl = new URL("http://localhost:4444/wd/hub");
             if (browser.equalsIgnoreCase("firefox")) {
-                FirefoxOptions fireOptions = new FirefoxOptions();
-                driver = new RemoteWebDriver(gridUrl, fireOptions);
+                driver = new RemoteWebDriver(gridUrl, new FirefoxOptions());
             } else if (browser.equalsIgnoreCase("edge")) {
-                EdgeOptions edgeOptions = new EdgeOptions();
-                driver = new RemoteWebDriver(gridUrl, edgeOptions);
+                driver = new RemoteWebDriver(gridUrl, new EdgeOptions());
             } else {
-                ChromeOptions chromeOptions = new ChromeOptions();
                 driver = new RemoteWebDriver(gridUrl, chromeOptions);
             }
         } else {
-            // Local Execution
             if (browser.equalsIgnoreCase("firefox")) {
                 driver = new FirefoxDriver();
             } else if (browser.equalsIgnoreCase("edge")) {
                 driver = new EdgeDriver();
             } else {
-                driver = new ChromeDriver();
+                driver = new ChromeDriver(chromeOptions);
             }
         }
 
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
-        driver.manage().window().maximize();
         driver.get(ConfigReader.getProperty("url")); 
     }
 
@@ -97,7 +99,6 @@ public class BaseTest {
         if (driver != null) {
             driver.quit();
         }
-        // Important: Cleanup ThreadLocal to prevent memory leaks
         test.remove();
         threadBrowser.remove();
     }
@@ -106,7 +107,6 @@ public class BaseTest {
     public void flushReport() {
         if (extent != null) {
             extent.flush();
-            System.out.println(">>> SUCCESS: Extent Report generated at: " + System.getProperty("user.dir") + File.separator + "reports");
         }
     }
 
