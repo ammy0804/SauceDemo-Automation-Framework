@@ -34,8 +34,18 @@ pipeline {
             bat 'docker-compose down'
             testNG()
 
-            // THIS LINE is what makes the report visible in Jenkins
-            archiveArtifacts artifacts: 'reports/SauceDemoReport.html', fingerprint: true, allowEmptyArchive: false
+            // This publishes the report as a beautiful sidebar link
+            publishHTML([
+                allowMissing: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'reports',
+                reportFiles: 'SauceDemoReport.html',
+                reportName: 'Extent Report'
+            ])
+            
+            // Still keep this as a backup
+            archiveArtifacts artifacts: 'reports/SauceDemoReport.html', fingerprint: true
         }
     }
 }

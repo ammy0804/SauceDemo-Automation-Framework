@@ -81,7 +81,8 @@ public class BaseTest {
         chromeOptions.setExperimentalOption("prefs", prefs);
 
         if (env.equalsIgnoreCase("grid")) {
-            URL gridUrl = new URL("http://localhost:4444/wd/hub");
+            @SuppressWarnings("deprecation")
+			URL gridUrl = new URL("http://localhost:4444/wd/hub");
             if (browser.equalsIgnoreCase("firefox")) {
                 driver = new RemoteWebDriver(gridUrl, new FirefoxOptions());
             } else if (browser.equalsIgnoreCase("edge")) {
