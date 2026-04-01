@@ -29,23 +29,16 @@ pipeline {
         }
     }
 
-   post {
+  post {
         always {
+            // Stop containers
             bat 'docker-compose down'
+            
+            // Publish TestNG results
             testNG()
 
-            // This publishes the report as a beautiful sidebar link
-            publishHTML([
-                allowMissing: false,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'reports',
-                reportFiles: 'SauceDemoReport.html',
-                reportName: 'Extent Report'
-            ])
-            
-            // Still keep this as a backup
-            archiveArtifacts artifacts: 'reports/SauceDemoReport.html', fingerprint: true
+            // ARCHIVE THE REPORT: This is the standard way without extra plugins
+            archiveArtifacts artifacts: 'reports/SauceDemoReport.html', fingerprint: true, allowEmptyArchive: true
         }
     }
 }
