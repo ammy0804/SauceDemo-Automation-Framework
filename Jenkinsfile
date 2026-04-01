@@ -5,8 +5,8 @@ pipeline {
        If your Maven is named 'Maven' and JDK is 'JDK11', change the names below.
     */
     tools {
-        maven 'Maven 3.9.6' 
-        jdk 'Java 17'
+        maven 'myMaven' 
+        jdk 'myjava'
     }
 
     stages {
