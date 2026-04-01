@@ -59,27 +59,28 @@ public class BaseTest {
         test.set(extent.createTest(method.getName()));
         test.get().assignCategory(threadBrowser.get());
 
-        // --- THE "NUCLEAR" POPUP FIX ---
+        // --- THE "ULTIMATE" CHROME FIX ---
         ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.addArguments("--headless=new"); // Critical for Jenkins
+        chromeOptions.addArguments("--headless=new");
         chromeOptions.addArguments("--window-size=1920,1080");
-        chromeOptions.addArguments("--disable-notifications");
-        chromeOptions.addArguments("--disable-popup-blocking");
         
-        // Disable Google's Breach detection that triggers the popup
-        chromeOptions.addArguments("--disable-features=PasswordGeneration,PasswordLeakDetection,SafeBrowsing");
-        chromeOptions.addArguments("--disable-save-password-bubble");
+        // 1. Disable Password Breach & Leak Detection (The popup you saw)
+        chromeOptions.addArguments("--disable-features=PasswordGeneration,PasswordLeakDetection,PasswordManagerHintSending");
+        
+        // 2. Disable FedCM (The new Chrome identity popup)
+        chromeOptions.addArguments("--disable-features=FedCm"); 
+        
+        // 3. General automation stability
+        chromeOptions.addArguments("--disable-blink-features=AutomationControlled");
+        chromeOptions.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
+        chromeOptions.setExperimentalOption("useAutomationExtension", false);
 
         Map<String, Object> prefs = new HashMap<>();
-        // Completely disable the credential manager and autofill
         prefs.put("credentials_enable_service", false);
         prefs.put("profile.password_manager_enabled", false);
-        prefs.put("autofill.profile_enabled", false);
         chromeOptions.setExperimentalOption("prefs", prefs);
-        chromeOptions.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
 
         if (env.equalsIgnoreCase("grid")) {
-            @SuppressWarnings("deprecation")
             URL gridUrl = new URL("http://localhost:4444/wd/hub");
             if (browser.equalsIgnoreCase("firefox")) {
                 driver = new RemoteWebDriver(gridUrl, new FirefoxOptions());
@@ -89,7 +90,6 @@ public class BaseTest {
                 driver = new RemoteWebDriver(gridUrl, chromeOptions);
             }
         } else {
-            // Local Execution
             if (browser.equalsIgnoreCase("firefox")) {
                 driver = new FirefoxDriver();
             } else if (browser.equalsIgnoreCase("edge")) {
