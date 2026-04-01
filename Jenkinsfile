@@ -28,11 +28,16 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            // Clean up again so the next build starts fresh
-            bat 'docker-compose down'
-            testNG(pattern: '**/testng-results.xml')
-        }
+post {
+    always {
+        // Clean up docker containers
+        bat 'docker-compose down'
+        
+        // Corrected syntax for TestNG plugin
+        testNG testResults: '**/testng-results.xml'
+        
+        // Archive the Extent Report so you can see it in Jenkins
+        archiveArtifacts artifacts: 'reports/*.html', allowEmptyArchive: true
     }
+}
 }
