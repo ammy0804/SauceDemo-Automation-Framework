@@ -29,15 +29,13 @@ pipeline {
         }
     }
 
-    post {
+   post {
         always {
             bat 'docker-compose down'
-            
-            // Exact syntax for your Jenkins version
             testNG()
 
-            // Saves the Extent Report file so it appears on the build page
-            archiveArtifacts artifacts: 'reports/SauceDemoReport.html', fingerprint: true, allowEmptyArchive: true
+            // THIS LINE is what makes the report visible in Jenkins
+            archiveArtifacts artifacts: 'reports/SauceDemoReport.html', fingerprint: true, allowEmptyArchive: false
         }
     }
 }

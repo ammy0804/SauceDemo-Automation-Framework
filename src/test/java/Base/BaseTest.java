@@ -59,19 +59,27 @@ public class BaseTest {
         test.set(extent.createTest(method.getName()));
         test.get().assignCategory(threadBrowser.get());
 
-        // --- POPUP FIX: Disables Google password leak warnings ---
+        // --- THE "NUCLEAR" POPUP FIX ---
         ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.addArguments("--disable-features=PasswordGeneration,PasswordLeakDetection");
-        chromeOptions.addArguments("--disable-save-password-bubble");
-        chromeOptions.addArguments("--headless=new"); // Best for Jenkins
+        chromeOptions.addArguments("--headless=new"); // Critical for Jenkins
+        chromeOptions.addArguments("--window-size=1920,1080");
+        chromeOptions.addArguments("--disable-notifications");
+        chromeOptions.addArguments("--disable-popup-blocking");
         
+        // Disable Google's Breach detection that triggers the popup
+        chromeOptions.addArguments("--disable-features=PasswordGeneration,PasswordLeakDetection,SafeBrowsing");
+        chromeOptions.addArguments("--disable-save-password-bubble");
+
         Map<String, Object> prefs = new HashMap<>();
+        // Completely disable the credential manager and autofill
         prefs.put("credentials_enable_service", false);
         prefs.put("profile.password_manager_enabled", false);
+        prefs.put("autofill.profile_enabled", false);
         chromeOptions.setExperimentalOption("prefs", prefs);
         chromeOptions.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
 
         if (env.equalsIgnoreCase("grid")) {
+            @SuppressWarnings("deprecation")
             URL gridUrl = new URL("http://localhost:4444/wd/hub");
             if (browser.equalsIgnoreCase("firefox")) {
                 driver = new RemoteWebDriver(gridUrl, new FirefoxOptions());
@@ -81,6 +89,7 @@ public class BaseTest {
                 driver = new RemoteWebDriver(gridUrl, chromeOptions);
             }
         } else {
+            // Local Execution
             if (browser.equalsIgnoreCase("firefox")) {
                 driver = new FirefoxDriver();
             } else if (browser.equalsIgnoreCase("edge")) {
