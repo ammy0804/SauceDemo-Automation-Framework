@@ -3,8 +3,8 @@
 <suite name="SauceDemo Cross-Browser Grid Suite" parallel="tests" thread-count="3" verbose="2">
     
     <listeners>
-        <listener class-name="utils.TestListener"/> 
-    </listeners>
+    <listener class-name="Listeners.TestListener"/> 
+</listeners>
 
     <parameter name="environment" value="grid"/>
     

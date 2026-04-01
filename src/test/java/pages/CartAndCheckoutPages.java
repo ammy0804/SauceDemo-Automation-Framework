@@ -1,43 +1,52 @@
 package pages;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 
-public class CartAndCheckoutPages {
-    WebDriver driver;
+// 1. EXTEND BASE PAGE
+public class CartAndCheckoutPages extends BasePage { 
+    
+    // 2. MAKE ALL LOCATORS PRIVATE
     // Cart Locators
-    By removeBtn = By.xpath("//button[text()='Remove']");
-    By continueShoppingBtn = By.id("continue-shopping");
-    By checkoutBtn = By.id("checkout");
+    private By removeBtn = By.xpath("//button[text()='Remove']");
+    private By continueShoppingBtn = By.id("continue-shopping");
+    private By checkoutBtn = By.id("checkout");
     
     // Checkout Info Locators
-    By firstName = By.id("first-name");
-    By lastName = By.id("last-name");
-    By postalCode = By.id("postal-code");
-    By continueBtn = By.id("continue");
-    By cancelBtn = By.id("cancel");
-    By errorMsg = By.cssSelector("h3[data-test='error']");
+    private By firstName = By.id("first-name");
+    private By lastName = By.id("last-name");
+    private By postalCode = By.id("postal-code");
+    private By continueBtn = By.id("continue");
+    private By cancelBtn = By.id("cancel");
+    private By errorMsg = By.cssSelector("h3[data-test='error']");
     
     // Checkout Overview Locators
-    By totalLabel = By.className("summary_total_label");
-    By finishBtn = By.id("finish");
-    By completeHeader = By.className("complete-header");
+    private By totalLabel = By.className("summary_total_label");
+    private By finishBtn = By.id("finish");
+    private By completeHeader = By.className("complete-header");
 
-    public CartAndCheckoutPages(WebDriver driver) { this.driver = driver; }
-
-    public void removeFirstItem() { driver.findElement(removeBtn).click(); }
-    public void clickContinueShopping() { driver.findElement(continueShoppingBtn).click(); }
-    public void clickCheckout() { driver.findElement(checkoutBtn).click(); }
-    
-    public void fillCheckoutDetails(String fName, String lName, String zip) {
-        driver.findElement(firstName).sendKeys(fName);
-        driver.findElement(lastName).sendKeys(lName);
-        driver.findElement(postalCode).sendKeys(zip);
+    // 3. PASS DRIVER TO SUPERCLASS
+    public CartAndCheckoutPages(WebDriver driver) { 
+        super(driver); 
     }
-    public void clickContinue() { driver.findElement(continueBtn).click(); }
-    public void clickCancel() { driver.findElement(cancelBtn).click(); }
-    public String getCheckoutError() { return driver.findElement(errorMsg).getText(); }
+
+    // --- 4. OPTIMIZED SMART CLICK METHODS ---
+    public void removeFirstItem() { clickElement(removeBtn); }
+    public void clickContinueShopping() { clickElement(continueShoppingBtn); }
+    public void clickCheckout() { clickElement(checkoutBtn); }
+    public void clickContinue() { clickElement(continueBtn); }
+    public void clickCancel() { clickElement(cancelBtn); }
+    public void clickFinish() { clickElement(finishBtn); }
     
-    public String getTotalPrice() { return driver.findElement(totalLabel).getText(); }
-    public void clickFinish() { driver.findElement(finishBtn).click(); }
-    public String getCompleteMessage() { return driver.findElement(completeHeader).getText(); }
+    // --- OPTIMIZED SMART TEXT ENTRY ---
+    public void fillCheckoutDetails(String fName, String lName, String zip) {
+        enterText(firstName, fName);
+        enterText(lastName, lName);
+        enterText(postalCode, zip);
+    }
+    
+    // --- OPTIMIZED SMART TEXT RETRIEVAL ---
+    public String getCheckoutError() { return getElementText(errorMsg); }
+    public String getTotalPrice() { return getElementText(totalLabel); }
+    public String getCompleteMessage() { return getElementText(completeHeader); }
 }

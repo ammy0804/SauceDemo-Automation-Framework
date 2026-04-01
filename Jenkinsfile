@@ -1,36 +1,38 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'myMaven' 
-        jdk 'myjava'    
-    }
-
     stages {
+        // Stage 1: Get the code from GitHub
+        stage('Checkout SCM') {
+            steps {
+                checkout scm
+            }
+        }
+
+        // Stage 2: THE NEW STAGE (Add/Replace here)
         stage('Cleanup & Docker Grid Up') {
             steps {
-                bat 'docker-compose down'
+                // -v: deletes old volumes (cleans DB/Grid cache)
+                // --remove-orphans: kills manual containers from previous runs
+                bat 'docker-compose down -v --remove-orphans'
                 bat 'docker-compose up -d'
             }
         }
 
+        // Stage 3: Run the tests
         stage('Run Automation Tests') {
             steps {
-                // The flag below tells Jenkins: "Don't crash if a test fails; let the report handle it."
-                bat 'mvn test -DsuiteXmlFile=grid-docker.xml -Dmaven.test.failure.ignore=true'
+                // This will now hit a fresh, clean grid
+                bat 'mvn test -DsuiteXmlFile=grid-docker.xml'
             }
         }
     }
 
     post {
         always {
+            // Clean up again so the next build starts fresh
             bat 'docker-compose down'
-            
-            // This captures your beautiful HTML Extent Report
-            archiveArtifacts artifacts: 'reports/*.html', fingerprint: true
-            
-            // This generates the trend charts in Jenkins
-            testNG() 
+            testNG(pattern: '**/testng-results.xml')
         }
     }
 }

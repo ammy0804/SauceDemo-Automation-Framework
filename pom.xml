@@ -53,21 +53,6 @@
     <scope>compile</scope>
 </dependency>
 
-<!-- Source: https://mvnrepository.com/artifact/com.epam.healenium/healenium-web -->
-<dependency>
-    <groupId>com.epam.healenium</groupId>
-    <artifactId>healenium-web</artifactId>
-    <version>3.6.0</version>
-    <scope>compile</scope>
-</dependency>
-
-<!-- Source: https://mvnrepository.com/artifact/com.applitools/eyes-selenium-java5 -->
-<dependency>
-    <groupId>com.applitools</groupId>
-    <artifactId>eyes-selenium-java5</artifactId>
-    <version>5.83.19</version>
-    <scope>compile</scope>
-</dependency>
 
   </dependencies>
   
