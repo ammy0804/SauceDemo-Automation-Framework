@@ -1,5 +1,7 @@
 package Base;
 
+import com.applitools.eyes.RectangleSize;
+import com.applitools.eyes.selenium.Eyes;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
@@ -31,6 +33,7 @@ public class BaseTest {
     protected static ExtentReports extent;
     public static ThreadLocal<ExtentTest> test = new ThreadLocal<>();
     protected static ThreadLocal<String> threadBrowser = new ThreadLocal<>();
+    protected static ThreadLocal<Eyes> eyes = new ThreadLocal<>();
 
     @BeforeSuite
     public void setupReport() {
@@ -118,6 +121,18 @@ public class BaseTest {
         // This activates the AI self-healing proxy
         this.driver = SelfHealingDriver.create(delegate);
         
+     // --- 4. NEW: Initialize Applitools ---
+        Eyes threadEyes = new Eyes();
+        threadEyes.setApiKey(ConfigReader.getProperty("applitools_api_key"));
+        eyes.set(threadEyes);
+        
+     // Start the visual test session
+        eyes.get().open(driver, "SauceDemo App", method.getName(), new RectangleSize(1280, 800));
+        
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        driver.get(ConfigReader.getProperty("url"));
+        
+        
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
         
         if(browser.equalsIgnoreCase("safari") && !env.equalsIgnoreCase("grid")) {
@@ -137,6 +152,27 @@ public class BaseTest {
         }
         test.remove();
         threadBrowser.remove();
+            try {
+                // --- NEW: Close Applitools Test ---
+                if (eyes.get() != null && eyes.get().getIsOpen()) {
+                    eyes.get().close(); 
+                }
+            } finally {
+                // Existing Cleanup
+                if (driver != null) { driver.quit(); }
+                if (extent != null) { extent.flush(); }
+                test.remove();
+                threadBrowser.remove();
+                
+                // Clean up Eyes thread
+                if (eyes.get() != null) {
+                    eyes.get().abortIfNotClosed();
+                    eyes.remove();
+                }
+            }
+        }
+
+        
     }
 
     @AfterSuite
