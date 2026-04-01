@@ -173,7 +173,6 @@ public class BaseTest {
         }
 
         
-    }
 
     @AfterSuite
     public void tearDownReport() throws Exception {
